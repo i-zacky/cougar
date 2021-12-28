@@ -1,0 +1,12 @@
+{
+  "name": "cougar",
+  "description": "AWS Lambda for Cognito CustomEmailSender Trigger",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "prettier:check": "npx prettier --check src",
+    "prettier:format": "npx prettier --write src"
+  }
+}

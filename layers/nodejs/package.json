@@ -1,0 +1,15 @@
+{
+  "name": "cougar-layers",
+  "description": "AWS Lambda Function Layers",
+  "version": "1.0.0",
+  "scripts": {},
+  "dependencies": {
+    "@aws-crypto/client-node": "^3.1.0",
+    "@sendgrid/mail": "^7.6.0",
+    "base64-js": "^1.5.1",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.89"
+  }
+}

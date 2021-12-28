@@ -1,0 +1,8 @@
+*.iws
+*.iml
+*.imr
+.idea/
+.DS_Store
+.vscode/
+.envrc
+node_modules/
