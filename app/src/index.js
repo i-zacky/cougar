@@ -68,10 +68,9 @@ const handleAdminCreateUser = async (request) => {
     }
 
     // send email by SendGrid
-    const username = request.clientMetadata.username
     const email = request.userAttributes.email
     const body = `
-    <p>Your username is ${username} and temporary password is ${temporaryPassword}</p>
+    <p>Your username is ${email} and temporary password is ${temporaryPassword}</p>
     `
     await sendMail(
         'no-reply@example.com',
@@ -97,10 +96,9 @@ const handleForgotPassword = async (request) => {
     }
 
     // send email by SendGrid
-    const username = request.clientMetadata.username
     const email = request.userAttributes.email
     const body = `
-    <p>Your username is ${username} and confirmation code is ${confirmationCode}</p>
+    <p>Your username is ${email} and confirmation code is ${confirmationCode}</p>
     `
     await sendMail(
         'no-reply@example.com',
