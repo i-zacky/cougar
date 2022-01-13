@@ -1,0 +1,19 @@
+################################
+# dev
+################################
+
+################################
+# Region
+REGION=${AWS_DEFAULT_REGION}
+
+################################
+# Environment
+ENV=dev
+# Project
+PROJ=leone
+# CFn Template Bucket
+CF_TEMPLATE_BUCKET=cf-templates-${AWS_ACCOUNT_ID}-${AWS_DEFAULT_REGION}
+
+LAMBDA_STACK_NAME=${ENV}-${PROJ}-cognito-lambda
+COGNITO_STACK_NAME=${ENV}-${PROJ}-cognito
+SENDGRID_API_KEY=${SENDGRID_API_KEY}

@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: cognito-lambda
+
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Parameters:
+  Project:
+    Default: leone
+    Type: String
+    Description: Project Name
+  Env:
+    Default: dev
+    Type: String
+    Description: Environment Name
+
+  SendGridApiKey:
+    NoEcho: true
+    Type: String
+    Description: API Key of SendGrid
+  UserPoolArn:
+    Type: String
+    Description: Allow Invoke Permission Cognito UserPool ARN
+
+Resources:
+  CMK:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "${Env}-${Project}-cmk"
+      Enabled: true
+      KeyUsage: ENCRYPT_DECRYPT
+      MultiRegion: false
+      PendingWindowInDays: 7
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: !Sub "${Env}-${Project}-cmk-policy"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: kms:*
+            Resource: "*"
+      Tags:
+        - Key: Name
+          Value: !Sub "${Env}-${Project}-cmk"
+
+  CMKAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${Env}-${Project}-cmk"
+      TargetKeyId: !Ref CMK
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${Env}-${Project}-cognito-lambda"
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${Env}-${Project}-cognito-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/service-role/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: kms
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: kms:Decrypt
+                Resource: !GetAtt CMK.Arn
+
+  LambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: Layer for Node.js
+      LayerName: !Sub "${Env}-${Project}-cognito-lambda-layer"
+      ContentUri: ../layers/
+      RetentionPolicy: Delete
+      CompatibleRuntimes:
+        - nodejs14.x
+  LambdaLayerPermission:
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref LambdaLayer
+      Principal: !Ref AWS::AccountId
+
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${Env}-${Project}-cognito-lambda"
+      Handler: src/index.handler
+      Runtime: nodejs14.x
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 120
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Layers:
+        - !Ref LambdaLayer
+      Environment:
+        Variables:
+          SENDGRID_API_KEY: !Ref SendGridApiKey
+
+  LambdaFunctionInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:invokeFunction
+      Principal: cognito-idp.amazonaws.com
+      FunctionName: !GetAtt LambdaFunction.Arn
+      SourceArn: !Ref UserPoolArn
+
+Outputs:
+  CMKKeyID:
+    Value: !Ref CMK
+    Export:
+      Name: !Sub "${AWS::StackName}-cmk-id"
+  CMKArn:
+    Value: !GetAtt CMK.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-cmk-arn"
+
+  CMKAlias:
+    Value: !Ref CMKAlias
+    Export:
+      Name: !Sub "${AWS::StackName}-cmk-alias"
+  CMKAliasArn:
+    Value: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:${CMKAlias}"
+    Export:
+      Name: !Sub "${AWS::StackName}-cmk-alias-arn"
+
+  LambdaExecutionRoleArn:
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-execution-role-arn"
+
+  LambdaLayerArn:
+    Value: !Ref LambdaLayer
+    Export:
+      Name: !Sub "${AWS::StackName}-layer-arn"
+
+  LambdaFunctionArn:
+    Value: !GetAtt LambdaFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-function-arn"
