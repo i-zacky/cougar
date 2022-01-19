@@ -111,6 +111,8 @@ Resources:
         - !Ref LambdaLayer
       Environment:
         Variables:
+          KEY_ID: !GetAtt CMK.Arn
+          KEY_ALIAS: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:${CMKAlias}"
           SENDGRID_API_KEY: !Ref SendGridApiKey
 
   LambdaFunctionInvokePermission:
